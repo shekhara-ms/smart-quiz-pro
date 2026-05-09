@@ -19,13 +19,13 @@ Smart Quiz Pro is a modern interactive quiz web application built using HTML, CS
 ## Screenshots
 
 ### Home Page
-![Home](screenshots/home.png)
+![Home](home.png)
 
 ### Quiz Interface
-![Quiz](screenshots/quiz-page.png)
+![Quiz](quiz-page.png)
 
 ### Results Page
-![Results](screenshots/result.png)
+![Results](result.png)
 
 ## How to Run
 1. Download project
