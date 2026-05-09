@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Quiz Pro</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+    min-height:100vh;
+    background:linear-gradient(-45deg,#667eea,#764ba2,#23a6d5,#23d5ab);
+    background-size:400% 400%;
+    animation:gradientBG 12s ease infinite;
+    font-family:'Segoe UI',sans-serif;
+    color:#fff;
+}
+@keyframes gradientBG{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+.navbar{background:rgba(0,0,0,.6)}
+.sidebar{
+    background:rgba(0,0,0,.75);
+    min-height:100vh;
+    padding:20px;
+}
+.sidebar button{
+    width:100%;
+    margin-bottom:10px;
+    border-radius:30px;
+}
+.glass{
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(15px);
+    border-radius:18px;
+    padding:30px;
+    box-shadow:0 15px 40px rgba(0,0,0,.4);
+}
+.option{
+    background:rgba(238, 223, 230, 0.653);
+    padding:12px 16px;
+    border-radius:12px;
+    margin:10px 0;
+    cursor:pointer;
+}
+.option:hover{background:rgba(239, 13, 73, 0.936)}
+.option.active{background:rgba(233, 12, 133, 0.767)}
+.option.correct{background:#198754!important}
+.option.wrong{background:#dc3545!important}
+.timer{color:#ffdf6c;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark">
+  <div class="container-fluid">
+    <span class="navbar-brand">🧠 SMART QUIZ PRO</span>
+  </div>
+</nav>
+
+<div class="container-fluid">
+<div class="row">
+
+<div class="col-md-3 col-lg-2 sidebar">
+    <h5>📋 Menu</h5>
+    <button class="btn btn-outline-light" onclick="showLeaderboard()">🏆 Leaderboard</button>
+    <button class="btn btn-outline-danger" onclick="clearLeaderboard()">🗑 Clear Scores</button>
+    <button class="btn btn-outline-info" onclick="location.reload()">🔄 Restart</button>
+</div>
+
+<div class="col-md-9 col-lg-10 p-4">
+
+<div id="startScreen" class="glass text-center">
+    <h3>Welcome to Smart Quiz</h3>
+    <input id="username" class="form-control my-3" placeholder="Enter your name">
+    <select id="difficulty" class="form-select my-3">
+        <option value="easy">Easy • 10s</option>
+        <option value="medium">Medium • 20s</option>
+        <option value="hard">Hard • 30s</option>
+    </select>
+    <button class="btn btn-warning w-100" onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<div id="quizScreen" class="glass d-none">
+    <div class="d-flex justify-content-between">
+        <span id="qNo"></span>
+        <span class="timer">⏱ <span id="time"></span>s</span>
+    </div>
+    <h5 class="mt-3" id="question"></h5>
+    <div id="options"></div>
+    <button class="btn btn-success w-100 mt-3" onclick="nextQuestion()">Next ➡</button>
+</div>
+
+<div id="resultScreen" class="glass d-none text-center">
+    <h3>Quiz Completed</h3>
+    <p id="scoreText"></p>
+    <button class="btn btn-light" onclick="reviewQuiz()">Review Answers</button>
+    <button class="btn btn-warning mt-2" onclick="showLeaderboard()">View Leaderboard</button>
+</div>
+
+<div id="reviewScreen" class="glass d-none">
+    <h4>📖 Answer Review</h4>
+    <div id="reviewContent"></div>
+
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-outline-light w-50"
+                onclick="backToResult()">
+            ⬅ Back to Result
+        </button>
+
+        <button class="btn btn-outline-warning w-50"
+                onclick="backToHome()">
+            🏠 Back to Home
+        </button>
+    </div>
+</div>
+
+
+
+<div id="leaderboardScreen" class="glass d-none">
+    <h4>🏆 Leaderboard</h4>
+    <ul id="leaderboardList" class="list-group list-group-flush"></ul>
+
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-outline-light w-50"
+                onclick="backToResult()">
+            ⬅ Back to Result
+        </button>
+
+        <button class="btn btn-outline-warning w-50"
+                onclick="backToHome()">
+            🏠 Back to Home
+        </button>
+    </div>
+</div>
+
+
+
+
+</div>
+</div>
+</div>
+
+<script>
+function escapeHTML(t){
+    return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+const quizBank={
+easy:[
+{q:"HTML tag for link?",o:["<a>","<p>","<div>"],a:0},
+{q:"Input tag?",o:["<input>","<form>","<table>"],a:0},
+{q:"Paragraph tag?",o:["<p>","<h1>","<div>"],a:0},
+{q:"Image tag?",o:["<img>","<src>","<image>"],a:0},
+{q:"Bold tag?",o:["<b>","<i>","<u>"],a:0},
+{q:"Line break?",o:["<br>","<hr>","<span>"],a:0},
+{q:"List tag?",o:["<ul>","<table>","<form>"],a:0},
+{q:"Heading tag?",o:["<h1>","<p>","<div>"],a:0},
+{q:"Form tag?",o:["<form>","<input>","<fieldset>"],a:0},
+{q:"HTML file extension?",o:[".html",".css",".js"],a:0}
+],
+medium:[
+{q:"Which stores data in browser?",o:["localStorage","PHP","MySQL"],a:0},
+{q:"DOM stands for?",o:["Document Object Model","Data Object Method","Doc Model"],a:0},
+{q:"JS runs on?",o:["Browser","Server","Compiler"],a:0},
+{q:"Event example?",o:["onclick","onload","Both"],a:2},
+{q:"Responsive design?",o:["All devices","Fast","Colorful"],a:0},
+{q:"Form validation?",o:["JavaScript","CSS","HTML only"],a:0},
+{q:"Bootstrap grid?",o:["Rows","Tables","Frames"],a:0},
+{q:"CSS selector?",o:["class","method","var"],a:0},
+{q:"JS keyword?",o:["let","int","define"],a:0},
+{q:"Bootstrap file type?",o:["CSS","EXE","PHP"],a:0}
+],
+hard:[
+{q:"localStorage stores?",o:["String","Integer","Object"],a:0},
+{q:"JS type?",o:["Interpreted","Compiled","Assembler"],a:0},
+{q:"Arrow function?",o:["=>","->","=="],a:0},
+{q:"Event bubbling relates to?",o:["DOM","CSS","HTML"],a:0},
+{q:"JSON full form?",o:["JavaScript Object Notation","Java Source Object","None"],a:0},
+{q:"setInterval used for?",o:["Timer","Style","Database"],a:0},
+{q:"JS scope?",o:["Global & Local","Static","Private"],a:0},
+{q:"HTML5 feature?",o:["Semantic tags","Frames","Fonts"],a:0},
+{q:"SPA means?",o:["Single Page Application","Static Page","Simple App"],a:0},
+{q:"Bootstrap uses?",o:["Flexbox","Only Tables","Canvas"],a:0}
+]};
+
+let level,questions,current=0,score=0,sec,timer,user;
+let userAnswers=[];
+
+function hideAll(){
+[startScreen,quizScreen,resultScreen,reviewScreen,leaderboardScreen]
+.forEach(x=>x.classList.add("d-none"));
+}
+
+function startQuiz(){
+user=username.value.trim();
+if(!user){alert("Enter name");return;}
+level=difficulty.value;
+questions=quizBank[level];
+sec=level==="easy"?10:level==="medium"?20:30;
+current=0; score=0; userAnswers=[];
+hideAll();
+quizScreen.classList.remove("d-none");
+loadQ();
+}
+
+function loadQ(){
+clearInterval(timer);
+let t=sec; time.innerText=t;
+timer=setInterval(()=>{t--;time.innerText=t;if(t===0)nextQuestion();},1000);
+let q=questions[current];
+qNo.innerText=`Question ${current+1}/10`;
+question.innerText=q.q;
+options.innerHTML="";
+q.o.forEach((x,i)=>{
+options.innerHTML+=`
+<div class="option" onclick="selectOption(this,${i})">
+<input type="radio" name="opt" value="${i}" hidden>
+${escapeHTML(x)}
+</div>`;
+});
+}
+
+function selectOption(el,i){
+document.querySelectorAll(".option").forEach(o=>o.classList.remove("active"));
+el.classList.add("active");
+el.querySelector("input").checked=true;
+}
+
+function nextQuestion(){
+clearInterval(timer);
+let s=document.querySelector('input[name="opt"]:checked');
+userAnswers[current]=s?+s.value:null;
+if(s && +s.value===questions[current].a) score++;
+current<9?(current++,loadQ()):finish();
+}
+
+function finish(){
+hideAll();
+resultScreen.classList.remove("d-none");
+scoreText.innerText=`${user}, Score: ${score}/10`;
+
+let lb=JSON.parse(localStorage.getItem("quizLB")||"[]");
+lb.push({name:user,score});
+localStorage.setItem("quizLB",JSON.stringify(lb));
+}
+
+function reviewQuiz(){
+hideAll();
+reviewScreen.classList.remove("d-none");
+reviewContent.innerHTML="";
+questions.forEach((q,i)=>{
+reviewContent.innerHTML+=`
+<p><b>Q${i+1}. ${q.q}</b></p>
+${q.o.map((x,j)=>{
+let cls=j===q.a?"correct":j===userAnswers[i]?"wrong":"";
+return `<div class="option ${cls}">${escapeHTML(x)}</div>`;
+}).join("")}
+<hr>`;
+});
+}
+
+function showLeaderboard(){
+hideAll();
+leaderboardScreen.classList.remove("d-none");
+let lb=JSON.parse(localStorage.getItem("quizLB")||"[]")
+.sort((a,b)=>b.score-a.score);
+leaderboardList.innerHTML=lb.length
+? lb.map(x=>`<li class="list-group-item bg-transparent text-white">${x.name} — ${x.score}</li>`).join("")
+: `<li class="list-group-item bg-transparent text-white">No scores yet</li>`;
+}
+
+function clearLeaderboard(){
+localStorage.removeItem("quizLB");
+leaderboardList.innerHTML="";
+}
+function backToResult(){
+    hideAll();
+    resultScreen.classList.remove("d-none");
+}
+
+function backToHome(){
+    hideAll();
+    startScreen.classList.remove("d-none");
+}
+
+</script>
+
+</body>
+</html>
